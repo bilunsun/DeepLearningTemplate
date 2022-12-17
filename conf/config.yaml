@@ -1,0 +1,67 @@
+defaults:
+  - _self_
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
+hydra:
+  output_subdir: null
+  run:
+    dir: .
+
+
+lit_model:
+  _target_: src.lit_model.ExampleMNISTLitModel
+
+  models_config:
+    model:
+      _target_: src.models.ExampleMNISTModel
+
+  optimizer_config:
+    _target_: torch.optim.Adam
+    lr: 3e-4
+
+  scheduler_config: null
+  # scheduler_config:
+  #   _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  #   T_max: ${trainer.max_epochs}
+
+  use_weights_path: null
+
+
+callbacks:
+  model_checkpoint:
+    _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    monitor: val_loss
+
+
+# logger:
+#   _target_: pytorch_lightning.loggers.wandb.WandbLogger
+#   project: TEST
+
+
+datamodule:
+  _target_: src.data.DataModule
+
+  dataset_config:
+    _target_: src.data.get_mnist_dataset
+    data_dir: data
+
+  batch_size: 128
+  shuffle: True
+  num_workers: 8
+
+
+trainer:
+  _target_: pytorch_lightning.Trainer
+  deterministic: true
+  accelerator: gpu
+  devices: [0]
+  max_epochs: 200
+  # val_check_interval: 1000
+
+
+# Restart training from checkpoint from PyTorch Lightning
+ckpt_path: null
+
+# Reproducibility
+seed: 123456
